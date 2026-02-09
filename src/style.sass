@@ -1,0 +1,1131 @@
+@use "sass:color"
+
+$color-bg: #1a1c29
+$color-element: #2D344F
+$color-element-highlight: #434C6F
+$color-fg: #fff
+$color-fg-dim: #a8afc4
+
+$color-primary: #a39cd7
+$color-on-primary: #000
+$color-action: #ffd26b
+$color-action-hover: #CBFFD9
+$color-on-action: #000
+
+$color-good:       #255540
+$color-bad:        #59303A
+$color-bad-bright: #C55560
+
+$text-big:    20px
+$text-middle: 16px
+$text-small:  14px
+
+$border-radius-section:  28px
+$border-radius-element:  20px
+
+$content-padding: 8vmin
+
+$delete-button-size: 8px
+
+$outdated-opacity: 40%
+
+$desktop: "(min-aspect-ratio: 1/1)"
+$mobile:  "(max-aspect-ratio: 1/1)"
+
+@font-face
+  font-family: DINish
+  font-weight: normal
+  font-style: normal
+  src: url(fonts/DINish-Regular.ttf) format(truetype)
+
+@font-face
+  font-family: DINish
+  font-weight: bold
+  font-style: normal
+  src: url(fonts/DINish-Bold.ttf) format(truetype)
+
+$font-family: DINish
+
+@mixin colored-icon-url($url)
+  mask-image: url($url)
+  -webkit-mask-image: url($url)
+
+@mixin colored-icon-base($color, $position: center)
+  content: ""
+  display: block
+  background-color: $color
+  @each $pre in ["", "-webkit-"]
+    #{$pre}mask-position: $position
+    #{$pre}mask-repeat: no-repeat
+    #{$pre}mask-size: contain
+
+@mixin colored-icon($url, $color, $position: center)
+  @include colored-icon-base($color, $position)
+  @include colored-icon-url($url)
+
+
+body
+  margin: 0
+  background-color: $color-bg
+  font-family: $font-family
+  font-size: 16px
+
+#ROOT
+  width: 100%
+  color: $color-fg
+  display: flex
+  flex-direction: column
+  align-items: center
+  box-sizing: border-box
+  font-size: $text-middle
+
+
+// ------------------------------------
+// ---------   WIDGETS  ---------------
+// ------------------------------------
+
+.expr
+  display: inline-flex
+  flex-direction: row
+  align-items: center
+
+  .op
+    font-size: text-small
+    color: $color-fg-dim
+    
+  .op.big
+    margin: 0 4px
+
+
+.info-box
+  display: flex
+  flex-direction: column
+  border-radius: $border-radius-section
+  background-color: $color-element
+  overflow: hidden
+
+  > .title
+    align-self: flex-start
+    padding: 10px 18px
+    border-bottom-right-radius: $border-radius-section
+    font-weight: bold
+    background-color: $color-primary
+    color: $color-on-primary
+
+  > .content
+    align-self: stretch
+    padding: 28px
+    padding-top: 0
+    margin-top: 20px
+    overflow-x: auto
+    overflow-y: hidden
+
+.error-box
+  align-self: stretch
+  border-radius: $border-radius-element
+  display: flex
+  flex-direction: column
+  padding: 6px 14px
+  font-size: $text-small
+  background-color: $color-bad
+  overflow: hidden
+
+.nowrap
+  white-space: nowrap
+
+.group
+  @extend .info-box
+  background: none
+  border: 2px $color-element solid
+  > .title
+    background-color: $color-element
+    color: $color-fg
+
+%simple-element
+  padding: 8px 16px
+  border-radius: $border-radius-element
+  border: none
+  color: $color-fg
+
+button
+  @extend %simple-element
+  box-sizing: content-box
+  display: flex
+  flex-direction: row
+  align-items: center
+  font-weight: bold
+  text-transform: uppercase
+
+  &[disabled]
+    color: $color-fg-dim
+    background-color: $color-element
+
+  &:not([disabled])
+    color: $color-on-primary
+    background-color: $color-primary
+    cursor: pointer
+
+  &.action:not([disabled])
+    color: $color-on-action
+    background-color: $color-action !important
+    &:hover
+      background-color: lighten($color-action, 8%) !important
+
+button.icon
+  @each $dim in [width, height]
+    #{$dim}: 36px
+  padding: 0
+  display: flex
+  align-items: center
+  justify-content: center
+
+  &::before
+    @include colored-icon-base($color-on-primary)
+    @each $dim in [width, height]
+      #{$dim}: 18px
+
+  &[disabled]::before
+    background-color: $color-fg-dim
+
+  &.delete
+    @each $dim in [width, height]
+      #{$dim}: 2 * $delete-button-size
+    z-index: 2
+
+    &::before
+      @each $dim in [width, height]
+        #{$dim}: $delete-button-size
+      @include colored-icon-url("img/close.svg")
+
+  &.add::before
+    @include colored-icon-url("img/add.svg")
+
+.button, input[type="submit"]
+  @extend button
+
+input[type="text"]
+  @extend %simple-element
+  outline: none
+  font-family: $font-family
+  font-size: $text-middle
+  background-color: $color-element
+  
+input[type=checkbox]
+  appearance: none
+  -webkit-appearance: none
+  outline: none
+  cursor: pointer
+
+input[type=checkbox], input[type=checkbox]::before
+  @each $dim in [width, height]
+    #{$dim}: 20px
+
+input[type=checkbox]
+  &::before
+    @include colored-icon("img/unchecked.svg", $color-fg)
+  
+  &:not(:checked):hover::before
+    @include colored-icon-url("img/unchecked_hover.svg")
+
+  &:checked::before
+    @include colored-icon-url("img/checked.svg")
+
+table 
+  border-spacing: 0
+  td, th
+    font-size: $text-middle
+
+.hidden
+  display: none !important
+
+::placeholder 
+  color: $color-fg-dim
+
+::selection 
+  background-color: $color-action
+  color: $color-on-action
+
+
+// ------------------------------------
+// ---------   MENUS  -----------------
+// ------------------------------------
+
+#menu
+  display: flex
+  padding: $content-padding
+
+  $gap: 8px
+
+  %item
+    font-size: 28px
+    font-weight: bold
+    padding: 10px 20px
+    &:not(:first-child)
+      margin-top: $gap
+
+  > :last-child
+    display: flex
+    flex-direction: column
+    align-items: stretch
+
+    > div
+      @extend %item
+      color: $color-fg-dim
+      background-color: $color-element
+
+      &:first-child
+        border-top-left-radius: $border-radius-element
+        border-top-right-radius: $border-radius-element
+      &:last-child
+        border-bottom-left-radius: $border-radius-element
+        border-bottom-right-radius: $border-radius-element
+
+      &:hover
+        cursor: pointer
+        color: $color-fg
+        background-color: $color-element-highlight
+
+  > .title
+    @extend %item
+    color: $color-on-primary
+    background-color: $color-primary
+
+  @media #{$desktop}
+    flex-direction: row
+    align-items: flex-start
+    > :last-child:not(:first-child) > :first-child
+      border-top-left-radius: 0
+    > .title
+      margin-left: -20%
+      margin-right: $gap
+      border-top-left-radius: $border-radius-element
+      border-bottom-left-radius: $border-radius-element
+
+  @media #{$mobile}
+    flex-direction: column
+    align-items: stretch
+    > :last-child:not(:first-child) > :first-child
+      border-radius: 0
+    > .title
+      margin-bottom: $gap
+      border-top-left-radius: $border-radius-element
+      border-top-right-radius: $border-radius-element
+
+
+// ------------------------------------
+// ---------   RESULTS  ---------------
+// ------------------------------------
+
+#result
+  padding: $content-padding
+
+%result-extra
+  display: flex
+  flex-direction: row
+  border-bottom-left-radius: $border-radius-section
+  border-bottom-right-radius: $border-radius-section
+  background-color: $color-element
+  font-size: $text-big
+
+  @media #{$mobile}
+    align-self: flex-end
+    border-bottom-right-radius: 0 !important
+
+#result-config-option
+  @extend %result-extra
+  align-items: center
+  padding: 10px 22px
+  color: $color-fg-dim
+
+  > input
+    margin-right: 12px
+    &::before
+      background-color: $color-fg-dim
+
+  &:has(> input[checked])
+    background-color: $color-primary
+    color: $color-on-primary
+  > input[checked]::before
+    background-color: $color-on-primary
+
+#result-menu
+  @extend %result-extra
+  font-weight: bold
+  text-transform: uppercase
+
+  > div
+    padding: 10px 22px
+    border-bottom-left-radius: $border-radius-section
+    border-bottom-right-radius: $border-radius-section
+
+    &.selected
+      background-color: $color-primary
+      color: $color-on-primary
+
+    &:not(.selected)
+      cursor: pointer
+
+  @media #{$mobile}
+    > :last-child
+      border-bottom-right-radius: 0 !important
+
+#truthtable
+  border-spacing: 0
+
+  tr > *
+    text-align: center
+  
+  tr:first-child
+    > *
+      border-bottom: 12px transparent solid
+
+
+    > td:last-child
+      position: relative
+
+      > .icon
+        position: absolute
+        height: auto
+        width: 100%
+        @each $side in [top, bottom, left, right]
+          #{$side}: 0
+        @each $side in [top, bottom]
+          border-#{$side}-left-radius: 0
+
+    > th
+      position: relative
+      width: 32px
+      padding: 0
+      padding-right: 4px
+    
+  tr:not(:first-child)
+    > *
+      border-bottom: 1px $color-fg-dim solid
+  
+    > td
+      padding: 8px
+      padding-bottom: 8px - (0.2 * $text-middle)
+    
+    > td:last-child
+      padding-left: 20px
+      border-left: 1px $color-fg-dim solid
+      text-align: right
+      font-weight: bold
+
+  tr:last-child > *
+    border-bottom: none
+
+#truthtable.outdated tr:not(:first-child)
+  opacity: $outdated-opacity
+
+.var-input
+  width: 42px
+  border-radius: 0 !important
+  text-align: center
+  @each $side in [left, right]
+    padding-#{$side}: 8px !important
+
+  &.invalid
+    background-color: $color-bad !important
+
+#normalforms
+  display: flex
+  flex-direction: column
+
+  > div
+    display: flex
+    flex-direction: row
+    align-items: flex-start
+    &:first-child
+      margin-bottom: 16px
+
+    > b
+      margin-right: 12px
+
+#karnaugh-options
+  display: flex
+  flex-direction: row
+  flex-wrap: wrap
+  align-items: flex-start
+  gap: 32px
+
+.karnaugh
+  display: grid
+  grid-template-columns: auto auto 1fr
+  grid-template-areas: ". col ." "row map implis" ". expr expr"
+  grid-gap: 32px
+
+  > *
+    align-self: start
+    justify-self: start
+  
+  $cell-size: 40px
+
+  .kmap
+    grid-area: map
+
+    tr > *
+      @each $pre in ["", "min-", "max-"]
+        @each $dim in [width, height]
+          #{$pre}#{$dim}: $cell-size
+    
+    td
+      position: relative
+      overflow: hidden
+
+    th
+      font-size: $text-small
+      text-align: center
+      color: $color-fg-dim
+    
+    td
+      @each $side in [left, top]
+        border-#{$side}: $color-fg 1px solid
+
+      > div
+        position: absolute
+        @each $side in [left, right, top, bottom]
+          #{$side}: 0
+        line-height: $cell-size
+        text-align: center
+        vertical-align: middle
+        font-size: $text-middle
+    
+    td:nth-child(4n+1)
+      border-right: $color-fg 2px solid
+    
+    tr:nth-child(4n+1) td
+      border-bottom: $color-fg 2px solid
+
+    td:last-child
+      border-right: $color-fg 1px solid
+    
+    tr:last-child td
+      border-bottom: $color-fg 1px solid
+
+  .mark
+    border-width: 2px
+    border-style: solid
+    border-radius: $cell-size / 3
+    margin: -$cell-size
+
+  .implis
+    grid-area: implis
+    margin-top: $cell-size
+    tr > *
+      padding: 0 4px
+
+  .vars
+    display: flex
+    flex-direction: row
+    align-items: stretch
+
+    @each $dir in [row, col]
+      &.#{$dir}
+        grid-area: #{$dir}
+
+    .var-input
+      margin-right: 2px
+
+    .add
+      height: auto
+      @each $side in [top, bottom]
+        border-#{$side}-left-radius: 0
+
+      &.disabled
+        display: none
+
+  button
+    float: right
+
+  button::before
+    @include colored-icon-url("img/tick.svg")
+
+  .expr
+    grid-area: expr
+    flex-wrap: wrap
+
+.karnaugh.outdated > :not(.vars)
+  opacity: $outdated-opacity
+
+
+#qmc
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+
+  > :not(:first-child)
+    margin-top: 32px !important
+
+  > div:not(#qmc-results)
+    display: flex
+    flex-direction: row
+    flex-wrap: wrap
+    align-items: flex-start
+    margin: -8px
+
+    > *
+      margin: 8px
+
+    table
+      td, th
+        padding: (8px) (10px)
+        @each $side in [top, left]
+          border-#{$side}: $color-fg-dim 1px solid
+        text-align: center
+
+      tr > :last-child
+        border-right: $color-fg-dim 1px solid
+      tr:last-child > *
+        border-bottom: $color-fg-dim 1px solid
+
+      th.title
+        border: none
+        @each $side in [left, right]
+          padding-#{$side}: 16px
+          border-top-#{$side}-radius: $border-radius-element
+        background-color: $color-primary
+        color: $color-on-primary
+        font-weight: bold
+        text-transform: uppercase
+
+      .impli-varname
+        border-top: none
+        border-right: none !important
+        font-size: $text-small
+        padding: 4px
+
+      .impli-cell
+        border-left: none
+
+    .step
+      tr > :last-child
+        @each $side in [right, top, bottom]
+          border-#{$side}: none
+
+      .group-start > *
+        border-top: 2px $color-fg solid
+
+    .impli-table
+      .essential-marker-col
+        border-left: none
+
+      .covered-mterm
+        margin: 2px
+        border-radius: 100%
+        &::after
+          @include colored-icon("img/close.svg", $color-fg)
+          @each $dim in [width, height]
+            #{$dim}: 10px
+          margin: 4px
+        &.unique
+          border: 1px $color-fg-dim solid
+
+    .used::after
+      @include colored-icon("img/tick.svg", $color-fg)
+      @each $dim in [width, height]
+        #{$dim}: 14px
+      margin-right: 4px
+
+#qmc-results
+  @extend .info-box
+  > .content
+    display: flex
+    flex-direction: column
+    > b
+      margin: 5px 0
+      font-size: $text-small
+      .conversion
+  align-self: flex-start
+  border-spacing: 4px
+
+  > tbody
+    
+    > tr > td
+      padding: 10px
+      vertical-align: top
+
+    > tr:first-child > td:first-child
+      @each $side in [left, right]
+        padding-#{$side}: 16px
+        border-top-#{$side}-radius: $border-radius-element
+      background-color: $color-primary
+      color: $color-on-primary
+
+    > tr:not(:first-child) > td:first-child
+      background-color: $color-element
+
+    .rules
+      $spacing: 6px
+      border-spacing: $spacing
+      margin: -$spacing
+      td
+        color: $color-fg-dim
+
+
+.conversion
+  align-self: flex-start
+  border-spacing: 4px
+
+.conversion, .conversion > tbody
+    
+    > tr > *
+      padding: 10px
+      vertical-align: top
+      &:last-child
+        padding-left: 18px
+
+    > tr:first-child > th
+      @each $side in [left, right]
+        padding-#{$side}: 16px
+        border-top-#{$side}-radius: $border-radius-element
+      background-color: $color-primary
+      color: $color-on-primary
+
+    > tr:not(:first-child) > td:first-child
+      background-color: $color-element
+
+    .rules
+      $spacing: 6px
+      border-spacing: $spacing
+      margin: -$spacing
+      td
+        color: $color-fg-dim
+
+
+#cmos-container
+  display: flex
+  flex-direction: row
+  flex-wrap: wrap
+  align-items: flex-start
+
+  .info-box 
+    margin-bottom: 64px
+    margin-right: 32px
+
+  .connection
+    background-color: $color-fg
+
+  .conj, .transistor-container
+    > .connection
+      width: 1px
+
+  .conj
+    display: flex
+    flex-direction: column
+
+    > div
+      flex: 1
+      display: flex
+      flex-direction: row
+      align-items: stretch
+
+  .disj
+    display: flex
+    flex-direction: column
+    align-items: stretch
+
+    > .connection
+      height: 1px
+    
+    > .conjs
+      flex: 1
+      display: flex
+      flex-direction: row
+      align-items: stretch
+      margin: -1px 0
+
+      > *
+        flex: 1
+
+  .conj > div:not(:last-child) > .disj
+    margin-bottom: -1px
+
+  .transistor-container
+    min-height: 60px
+    display: flex
+    flex-direction: column
+    align-items: flex-end
+
+    > .connection
+      flex: 1
+
+    > .transistor-with-invar
+      display: flex
+      flex-direction: row
+      justify-content: flex-end
+      align-items: center
+
+      > .transistor
+        width: 20px
+        height: 20px
+        margin-left: 5px
+        display: flex
+        align-items: stretch
+        justify-content: stretch
+
+      > .transistor::before
+        @include colored-icon-base($color-fg, right)
+        flex: 1
+
+      > .transistor.nmos::before
+        @include colored-icon-url("img/cmos/nmos.svg")
+
+      > .transistor.pmos::before
+        @include colored-icon-url("img/cmos/pmos.svg")
+
+  .out
+    height: 80px
+    display: flex
+    flex-direction: row
+    align-items: center
+    border-left: 1px $color-fg solid
+    margin-left: -1px
+
+    > div
+      height: 1px
+      background-color: $color-fg
+
+  .vcc, .gnd
+    width: calc(30 * 1px)
+    height: calc(60 * 1px)
+
+  .vcc::before, .gnd::before
+    width: 100%
+    height: 100%
+    @include colored-icon-base($color-fg)
+
+  .vcc::before
+    @include colored-icon-url("img/cmos/vcc.svg")
+
+  .gnd::before
+    @include colored-icon-url("img/cmos/gnd.svg")
+
+
+.sat
+  padding: 10px 16px
+  background-color: $color-good
+  color: $color-fg
+  float: left
+  align-self: flex-start
+  border-radius: $border-radius-element
+
+.sat.notin
+  background-color: $color-bad
+
+
+#horn-sat-container
+  display: flex
+  flex-direction: row
+  flex-wrap: wrap
+
+  .info-box
+    @each $side in [bottom, right]
+      margin-#{$side}: 32px
+
+  #horn-sat
+    align-self: flex-start
+    display: flex
+    flex-direction: column
+
+    table
+      border-spacing: 4px
+      margin: -4px
+      margin-bottom: 32px
+
+      td
+        padding: 4px 10px
+
+      td:not(:last-child)::after
+        content: "0"
+
+      td.marked::after
+        content: "1"
+
+      td.marked
+        background-color: $color-primary
+        color: $color-on-primary
+
+      td:last-child
+        padding-left: 20px
+
+        .expr .marked
+          background-color: $color-primary
+          color: $color-on-primary
+
+
+#dp-sat-container
+  display: flex
+  flex-direction: column
+
+  .dp-sat
+    display: flex
+    flex-direction: column
+
+    $clause-name-height: $text-middle + 10px
+
+    .clause
+      display: inline-flex
+      flex-direction: row
+      align-items: center
+
+    .clause-set
+
+      .clause-with-name
+        display: inline-flex
+        flex-direction: column
+        align-items: center
+
+        > span
+          height: $clause-name-height
+          margin-bottom: -$clause-name-height
+          color: $color-fg-dim
+          display: inline-flex
+          align-items: flex-end
+
+    .clause-set.with-names
+      margin-bottom: $clause-name-height
+
+    > .group
+      margin-top: 32px
+      > .content
+        overflow-x: auto
+
+    .resolutions
+      display: flex
+      flex-direction: row
+      flex-wrap: wrap
+      margin-bottom: 32px
+
+      > .resolution
+        display: flex
+        flex-direction: column
+        align-items: stretch
+        margin: 10px
+
+        > :first-child
+          display: flex
+          flex-direction: row
+          justify-content: space-between
+          border-bottom: 1px solid $color-fg
+          padding: 4px
+
+          > :last-child
+            margin-left: 16px
+
+        > :last-child
+          align-self: center
+          padding: 4px
+
+        > .result-with-naming
+          color: $color-fg-dim
+
+          > :first-child
+            color: $color-fg
+
+          > span
+            margin: 0 4px
+
+    .sat
+      margin-top: 32px
+
+
+#gates-cost
+  align-items: flex-start
+  > .info-box
+    margin-bottom: 32px
+
+
+// ------------------------------------
+// ---------   INPUTS  ----------------
+// ------------------------------------
+
+#input-expression, #input-truthtable, #input-karnaugh, #input-minmaxterm
+  padding: $content-padding
+  box-sizing: border-box
+  button.action
+    margin-left: 40px
+
+#input-expression
+  width: 100%
+  @media #{$desktop}
+    max-width: 820px
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+
+  > form
+    align-self: stretch
+    display: flex
+    flex-direction: row
+    align-items: stretch
+    
+    > input[type="text"]
+      flex: 1
+      border-top-right-radius: 0
+      border-bottom-right-radius: 0
+      &.mark-error::selection
+        background-color: $color-bad-bright
+        color: $color-bad
+    
+    > input[type="submit"]
+      border-top-left-radius: 0
+      border-bottom-left-radius: 0
+      padding-left: 12px
+      margin-left: 2px !important
+
+  > .error-box
+    align-self: flex-start
+    margin-top: 12px
+
+  > .info-box
+    margin-top: 36px
+
+    > .content
+      display: flex
+      flex-direction: column
+      align-items: stretch
+
+      > table
+        tr > *
+          padding: 4px
+        tr:not(:last-child) > *
+          border-bottom: 1px $color-fg-dim solid
+        th > div
+          float: left
+          margin-right: 10px
+
+#extra-keyboard
+  display: flex
+  flex-direction: row
+  align-items: stretch
+  margin-top: 16px
+
+  > button
+    &:not(:first-child)
+      margin-left: 2px
+    &:not(:first-child)
+      border-top-left-radius: 0
+      border-bottom-left-radius: 0
+    &:not(:last-child)
+      border-top-right-radius: 0
+      border-bottom-right-radius: 0
+
+%multiple-choice
+  display: flex
+  align-items: stretch
+  height: 100%
+
+  > div
+    position: relative
+    width: 30px
+    height: 30px
+    margin: 4px
+    margin-left: 0
+    &:last-child
+      margin-right: 0
+
+    > *
+      position: absolute
+      @each $side in [left, right, top, bottom]
+        #{$side}: 0
+      margin: 0
+
+    > input
+      appearance: none
+      -webkit-appearance: none
+      outline: none
+      z-index: 1
+      cursor: pointer
+
+    > div
+      display: flex
+      align-items: center
+      justify-content: center
+      background-color: $color-element
+      color: $color-fg-dim
+      font-size: $text-middle
+      font-weight: normal
+    
+    > input:hover + div
+        color: $color-fg
+
+    > input:checked + div
+      background-color: $color-primary
+      color: $color-on-primary
+      font-weight: bold
+
+#input-truthtable
+  display: flex
+  flex-direction: row
+  align-items: flex-start
+
+  > table
+    @extend #truthtable
+
+    td > .add
+      border-bottom-right-radius: 0
+      &.add.disabled::before
+        display: none !important
+
+    th > .delete
+      position: relative
+      @each $side in [top, bottom]
+        margin-#{$side}: -$delete-button-size
+      margin-right: 4px
+      float: right
+
+    td:last-child
+      border-left: 12px transparent solid !important
+
+    tr:not(:first-child) > td:last-child
+      padding: 0
+      border-bottom: none !important
+
+    .result-select
+      @extend %multiple-choice
+      flex-direction: row
+
+#input-minmaxterm
+  width: 100%
+  @media #{$desktop}
+    max-width: 690px
+  display: flex
+  flex-direction: row
+  align-items: flex-start
+
+  > .inputs
+    flex: 1
+    display: grid
+    grid-template-columns: auto 1fr
+
+    > .mterms
+      justify-self: end
+
+    > .dontcare, > .mterms > div
+      @extend %simple-element
+      text-transform: uppercase
+
+    .mterms > :not(.selected)
+      background-color: $color-element
+      border-top-left-radius: 0
+      border-top-right-radius: 0
+      margin-top: 6px
+      margin-bottom: 22px
+      cursor: pointer
+
+    > .dontcare, > .mterms > .selected
+      border-top-right-radius: 0  !important
+      border-bottom-right-radius: 0 !important
+      background-color: $color-primary !important
+      color: $color-on-primary !important
+      font-weight: bold
+
+    .mterms > .selected
+      border-bottom-left-radius: 0
+
+    > input[type="text"]
+      align-self: start
+      border-top-left-radius: 0
+      border-bottom-left-radius: 0
+      margin-left: 6px
