@@ -129,8 +129,9 @@ proc update(input: MinMaxTermsInput) =
       input.mtermDontcareCollisions &= t
 
 
-converter toState(res: ProblemResult): State =
-  State(stage: problemResult, result: res)
+proc setResult(res: ProblemResult) =
+  state = State(stage: problemResult, result: res)
+  window.location.href = "#result"
 
 proc computeFromTable(table: TruthTable, problem: TableCompatProblem): ProblemResult =
   result = ProblemResult(problem: problem)
@@ -183,18 +184,6 @@ proc computeFromMinMaxTerm(input: MinMaxTermsInput, problem: TableCompatProblem)
 
   computeFromTable(table, problem)
 
-proc compute(input: Input) =
-  case input.kind
-  of iKarnaugh: assert false
-  of iTruthTable: state = computeFromTable(input.table, input.problem)
-  of iMinMaxTerm: state = computeFromMinMaxTerm(input.minMaxTerms, input.problem)
-  of iExpression:
-    let res = computeFromExpr(input.expr, input.problem)
-    if res.isOk: state = res.get
-    else: state.input.error = some(res.error)
-
-
-
 
 proc draw(input: TruthTable, problem: Problem): VNode =
   let invalidVars = findDupAndEmpty(input.vars)
@@ -202,7 +191,7 @@ proc draw(input: TruthTable, problem: Problem): VNode =
   buildHtml(form(id = "input-truthtable")):
     proc onsubmit(e: Event, _: VNode) =
       preventDefault e
-      state = computeFromTable(input, problem)
+      setResult computeFromTable(input, problem)
 
     table:
       tr:
@@ -251,7 +240,7 @@ proc draw(input: TruthTable, problem: Problem): VNode =
                           else: "d"
                 )
     button(class = "action", disabled = len(invalidVars) > 0):
-      text "compute"
+      text "generate"
 
 proc draw(input: MinMaxTermsInput, problem: TableCompatProblem): VNode =
   let isInvalid = len(input.mtermDontcareCollisions) > 0
@@ -267,7 +256,7 @@ proc draw(input: MinMaxTermsInput, problem: TableCompatProblem): VNode =
   buildHtml(form(id = "input-minmaxterm")):
     proc onsubmit(e: Event, _: VNode) =
       preventDefault e
-      state = computeFromMinMaxTerm(input, problem)
+      setResult computeFromMinMaxTerm(input, problem)
 
     tdiv(class = "inputs"):
       tdiv(class = "mterms"):
@@ -281,7 +270,7 @@ proc draw(input: MinMaxTermsInput, problem: TableCompatProblem): VNode =
       tdiv(class = "dontcare"): text "don't care"
       drawEdit(input.strVals.dontcare)
 
-    button(class = "action", disabled = isInvalid or isEmpty): text "compute"
+    button(class = "action", disabled = isInvalid or isEmpty): text "generate"
 
 proc draw(input: Input): VNode =
   case input.kind
@@ -296,7 +285,7 @@ proc draw(input: Input): VNode =
           preventDefault e
           let res = computeFromExpr(input.expr, input.problem)
           if res.isOk:
-            state = res.get
+            setResult res.get
           else:
             let err = res.error
             input.error = some(err)
@@ -326,7 +315,7 @@ proc draw(input: Input): VNode =
 
         input(
           `type` = "submit",
-          value = "compute",
+          value = "generate",
           class = "action",
           disabled = len(input.expr) == 0
         )
@@ -393,16 +382,25 @@ proc main(route: RouterData): VNode =
     of ["input", @problemStr, @inputKindStr]:
       let problem = Problem(parseInt(problemStr))
       let inputKind = InputKind(parseInt(inputKindStr))
-      if not (
-        (state.stage == problemInput and (state.input.problem, state.input.kind) == (problem, inputKind)) or
-        (state.stage == problemResult and state.result.problem == problem)
-      ):
+      if not (state.stage == problemInput and (state.input.problem, state.input.kind) == (problem, inputKind)):
         state = newInputState(problem, inputKind)
+    of ["result"]: # just to make going back (as well as reload) from result land on input stage
+      if state.stage != problemResult:
+        window.history.back()
     else:
       window.location.href = "#"
 
   buildHtml(tdiv):
     tdiv(id = "header"):
+      tdiv(id = "header-main"):
+        a(id = "logo", href="#")
+        tdiv(id = "page-title"):
+          case state.stage
+          of chooseProblem: text "LOGIC"
+          of chooseInput: text $state.problem
+          of problemInput: text $state.input.problem
+          of problemResult: text $state.result.problem
+
       case state.stage
       of problemInput:
         if state.input.kind == iKarnaugh:
@@ -449,15 +447,17 @@ proc main(route: RouterData): VNode =
 
       case state.stage
       of chooseProblem:
-        tdiv(id = "menu"): tdiv:
-          for problem in Problem:
-            a(href =
-              if problem in {pTruthTable .. pQmc}:
-                "#chooseinput:" & $problem.int
-              else:
-                createLinkToInput(problem, iExpression)
-            ):
-              text $problem
+        tdiv(id = "menu"):
+          tdiv(class = "title"): text "generate"
+          tdiv:
+            for problem in Problem:
+              a(href =
+                if problem in {pTruthTable .. pQmc}:
+                  "#chooseinput:" & $problem.int
+                else:
+                  createLinkToInput(problem, iExpression)
+              ):
+                text $problem
       
       of chooseInput:
         template menuItem(kind: InputKind): VNode =

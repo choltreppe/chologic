@@ -6,24 +6,24 @@ $color-element-highlight: #434C6F
 $color-fg: #fff
 $color-fg-dim: #a8afc4
 
-$color-primary: #a39cd7
+$color-primary: #b8cdf5
 $color-on-primary: #000
-$color-action: #ffd26b
-$color-action-hover: #CBFFD9
+$color-action: #ffec9a
 $color-on-action: #000
 
 $color-good:       #255540
 $color-bad:        #59303A
 $color-bad-bright: #C55560
 
-$text-big:    20px
-$text-middle: 16px
 $text-small:  14px
+$text-middle: 16px
+$text-big:    20px
+$text-huge:   28px
 
 $border-radius-section:  28px
 $border-radius-element:  20px
 
-$content-padding: 8vmin
+$content-padding: 50px
 
 $delete-button-size: 8px
 
@@ -66,13 +66,16 @@ $font-family: DINish
 
 body
   margin: 0
+  min-height: 100vh
+  display: flex
+  flex-direction: column
   background-color: $color-bg
   font-family: $font-family
   font-size: 16px
 
 #ROOT
   width: 100%
-  min-height: 100vh
+  flex: 1
   display: flex
   flex-direction: column
   align-items: stretch
@@ -81,22 +84,47 @@ body
 
 #header
   display: flex
-  flex-direction: row
-  align-items: flex-start
+  flex-direction: column
+  align-items: stretch
   overflow-x: auto
 
   @media #{$desktop}
-    justify-content: center
+    align-self: center
+    width: 640px
 
-  @media #{$mobile}
-    justify-content: flex-end
+#header-main
+  display: flex
+  flex-direction: row
+  align-items: stretch
+  justify-content: space-between
+  background-color: $color-primary
+  color: $color-on-primary
+
+  @media #{$desktop}
+    border-bottom-left-radius: $border-radius-section
+    border-bottom-right-radius: $border-radius-section
+    z-index: 2
+
+#logo
+  display: block
+  width: 80px
+  margin: 16px
+  background: url(img/logo.svg) center no-repeat
+  background-size: contain
+
+#page-title
+  font-size: $text-huge
+  font-weight: bold
+  padding: ($text-huge * 0.8) ($text-huge * 1.2)
 
 %header-extra
+  align-self: flex-end
   display: flex
   flex-direction: row
   border-bottom-left-radius: $border-radius-section
   border-bottom-right-radius: $border-radius-section
   background-color: $color-element
+  color: $color-fg-dim
   font-size: $text-big
 
   @media #{$mobile}
@@ -105,8 +133,9 @@ body
 #header-config-option
   @extend %header-extra
   align-items: center
-  padding: 10px 22px
-  color: $color-fg-dim
+  padding: 10px 28px
+  @media #{$desktop}
+    padding-right: 22px
 
   > input
     margin-right: 12px
@@ -114,31 +143,37 @@ body
       background-color: $color-fg-dim
 
   &:has(> input[checked])
-    background-color: $color-primary
-    color: $color-on-primary
+    background-color: $color-element-highlight
+    color: $color-fg
   > input[checked]::before
-    background-color: $color-on-primary
+    background-color: $color-fg
 
 #header-menu
   @extend %header-extra
   font-weight: bold
   text-transform: uppercase
+  overflow: hidden
 
   > div
     padding: 10px 22px
-    border-bottom-left-radius: $border-radius-section
-    border-bottom-right-radius: $border-radius-section
+    &:first-child
+      padding-left: 28px
+    @media #{$desktop}
+      &:last-child
+        padding-right: 28px
 
     &.selected
-      background-color: $color-primary
-      color: $color-on-primary
+      background-color: $color-element-highlight
+      color: $color-fg
 
     &:not(.selected)
       cursor: pointer
 
-  @media #{$mobile}
-    > :last-child
-      border-bottom-right-radius: 0 !important
+@media #{$desktop}
+  #header-config-option, #header-menu
+    margin-top: -$border-radius-section
+  #header-config-option, #header-menu > div
+    padding-top: 10px + $border-radius-section
 
 #content
   flex: 1
@@ -148,6 +183,20 @@ body
   flex-direction: column
   align-items: center
   overflow-x: auto
+
+#github
+  @each $dim in [width, height]
+    #{$dim}: 48px
+  margin: 14px
+  @include colored-icon("img/github.svg", $color-element-highlight)
+  
+  @media #{$desktop}
+    position: absolute
+    top: 0
+    right: 0
+
+  @media #{$mobile}
+    align-self: flex-start
 
 
 // ------------------------------------
@@ -338,7 +387,7 @@ table
   $gap: 8px
 
   %item
-    font-size: 28px
+    font-size: $text-huge
     font-weight: bold
     padding: 10px 20px
     &:not(:first-child)
@@ -378,7 +427,7 @@ table
     > :last-child:not(:first-child) > :first-child
       border-top-left-radius: 0
     > .title
-      margin-left: -20%
+      margin-left: -12px
       margin-right: $gap
       border-top-left-radius: $border-radius-element
       border-bottom-left-radius: $border-radius-element
