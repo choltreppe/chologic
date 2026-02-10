@@ -146,18 +146,17 @@ proc draw*(algo: DpSat, useClauseNames: bool): VNode =
   proc draw(clauses: seq[ClauseId], areStartClauses = false): VNode =
     let withClauseNames = areStartClauses and useClauseNames
 
-    buildHtml:
-      tdiv(class = "clause-set".concatIf(withClauseNames, "with-names")):
-        text "Φ = {"
-        for i, clauseId in clauses:
-          if i > 0: text ","
-          if withClauseNames:
-            tdiv(class = "clause-with-name"):
-              draw(algo.clauses[clauseId])
-              draw(clauseId)
-          else:
+    buildHtml(tdiv(class = "clause-set".concatIf(withClauseNames, "with-names"))):
+      text "Φ = {"
+      for i, clauseId in clauses:
+        if i > 0: text ","
+        if withClauseNames:
+          tdiv(class = "clause-with-name"):
+            draw(algo.clauses[clauseId])
             draw(clauseId)
-        text "}"
+        else:
+          draw(clauseId)
+      text "}"
 
   buildHtml(tdiv(id = "dp-sat-container", class = "box")):
     if Some(@conv) ?= algo.conversion:
