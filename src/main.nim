@@ -1,4 +1,5 @@
-import std/[dom, options, sequtils, strutils, sets, math, sugar]
+{.experimental: "caseStmtMacros".}
+import std/[dom, options, sequtils, strutils, strformat, sets, math, sugar, base64]
 import fusion/matching
 import results
 include karax/prelude
@@ -68,11 +69,11 @@ type
     else:
       conv: Conversion
 
-  Stage = enum selectProblem, selectInput, problemInput, problemResult
+  Stage = enum chooseProblem, chooseInput, problemInput, problemResult
   State = object
     case stage: Stage
-    of selectProblem: discard
-    of selectInput: problem: Problem
+    of chooseProblem: discard
+    of chooseInput: problem: Problem
     of problemInput: input: Input
     of problemResult: result: ProblemResult
 
@@ -182,22 +183,18 @@ proc computeFromMinMaxTerm(input: MinMaxTermsInput, problem: TableCompatProblem)
 
   computeFromTable(table, problem)
 
+proc compute(input: Input) =
+  case input.kind
+  of iKarnaugh: assert false
+  of iTruthTable: state = computeFromTable(input.table, input.problem)
+  of iMinMaxTerm: state = computeFromMinMaxTerm(input.minMaxTerms, input.problem)
+  of iExpression:
+    let res = computeFromExpr(input.expr, input.problem)
+    if res.isOk: state = res.get
+    else: state.input.error = some(res.error)
 
-proc drawMenuItem(problem: Problem): VNode =
-  buildHtml(tdiv):
-    text $problem
-    proc onclick =
-      state = 
-        if problem in {pTruthTable .. pQmc}:
-          State(stage: selectInput, problem: problem)
-        else:
-          newInputState(problem, iExpression)
 
-proc drawMenuItem(kind: InputKind): VNode =
-  buildHtml(tdiv):
-    text $kind
-    proc onclick =
-      state = newInputState(state.problem, kind)
+
 
 proc draw(input: TruthTable, problem: Problem): VNode =
   let invalidVars = findDupAndEmpty(input.vars)
@@ -383,8 +380,26 @@ proc draw(input: Input): VNode =
     assert input.problem == pKarnaugh
     draw(input.karnaugh)
 
-proc createDom: VNode =
+proc main(route: RouterData): VNode =
   template res: var ProblemResult = state.result
+
+  # routing
+  if len(route.hashPart) <= 1:
+    state = State(stage: chooseProblem)
+  else:
+    case ($route.hashPart)[1..^1].split(':')
+    of ["chooseinput", @problemStr]:
+      state = State(stage: chooseInput, problem: Problem(parseInt(problemStr)))
+    of ["input", @problemStr, @inputKindStr]:
+      let problem = Problem(parseInt(problemStr))
+      let inputKind = InputKind(parseInt(inputKindStr))
+      if not (
+        (state.stage == problemInput and (state.input.problem, state.input.kind) == (problem, inputKind)) or
+        (state.stage == problemResult and state.result.problem == problem)
+      ):
+        state = newInputState(problem, inputKind)
+    else:
+      window.location.href = "#"
 
   buildHtml(tdiv):
     tdiv(id = "header"):
@@ -428,20 +443,32 @@ proc createDom: VNode =
       else: discard
 
     tdiv(id = "content"):
+
+      func createLinkToInput(problem: Problem, kind: InputKind): string =
+        &"#input:{problem.int}:{kind.int}"
+
       case state.stage
-      of selectProblem:
+      of chooseProblem:
         tdiv(id = "menu"): tdiv:
           for problem in Problem:
-            drawMenuItem(problem)
+            a(href =
+              if problem in {pTruthTable .. pQmc}:
+                "#chooseinput:" & $problem.int
+              else:
+                createLinkToInput(problem, iExpression)
+            ):
+              text $problem
       
-      of selectInput:
+      of chooseInput:
+        template menuItem(kind: InputKind): VNode =
+          buildHtml(a(href = createLinkToInput(state.problem, kind))): text $kind
         tdiv(id = "menu"):
           tdiv(class = "title"): text "input as"
           tdiv:
             if state.problem == pKarnaugh:
-              drawMenuItem(iKarnaugh)
+              menuItem(iKarnaugh)
             for kind in InputKind.iExpression .. iMinMaxTerm:
-              drawMenuItem(kind)
+              menuItem(kind)
       
       of problemInput: draw(state.input)
 
@@ -458,4 +485,4 @@ proc createDom: VNode =
         else: draw(res.conv)
       
 
-setRenderer createDom
+setRenderer main
