@@ -72,12 +72,82 @@ body
 
 #ROOT
   width: 100%
+  min-height: 100vh
+  display: flex
+  flex-direction: column
+  align-items: stretch
+  font-size: $text-middle
   color: $color-fg
+
+#header
+  display: flex
+  flex-direction: row
+  align-items: flex-start
+  overflow-x: auto
+
+  @media #{$desktop}
+    justify-content: center
+
+  @media #{$mobile}
+    justify-content: flex-end
+
+%header-extra
+  display: flex
+  flex-direction: row
+  border-bottom-left-radius: $border-radius-section
+  border-bottom-right-radius: $border-radius-section
+  background-color: $color-element
+  font-size: $text-big
+
+  @media #{$mobile}
+    border-bottom-right-radius: 0 !important
+
+#header-config-option
+  @extend %header-extra
+  align-items: center
+  padding: 10px 22px
+  color: $color-fg-dim
+
+  > input
+    margin-right: 12px
+    &::before
+      background-color: $color-fg-dim
+
+  &:has(> input[checked])
+    background-color: $color-primary
+    color: $color-on-primary
+  > input[checked]::before
+    background-color: $color-on-primary
+
+#header-menu
+  @extend %header-extra
+  font-weight: bold
+  text-transform: uppercase
+
+  > div
+    padding: 10px 22px
+    border-bottom-left-radius: $border-radius-section
+    border-bottom-right-radius: $border-radius-section
+
+    &.selected
+      background-color: $color-primary
+      color: $color-on-primary
+
+    &:not(.selected)
+      cursor: pointer
+
+  @media #{$mobile}
+    > :last-child
+      border-bottom-right-radius: 0 !important
+
+#content
+  flex: 1
+  box-sizing: border-box
+  padding: $content-padding
   display: flex
   flex-direction: column
   align-items: center
-  box-sizing: border-box
-  font-size: $text-middle
+  overflow-x: auto
 
 
 // ------------------------------------
@@ -264,7 +334,6 @@ table
 
 #menu
   display: flex
-  padding: $content-padding
 
   $gap: 8px
 
@@ -327,59 +396,6 @@ table
 // ------------------------------------
 // ---------   RESULTS  ---------------
 // ------------------------------------
-
-#result
-  padding: $content-padding
-
-%result-extra
-  display: flex
-  flex-direction: row
-  border-bottom-left-radius: $border-radius-section
-  border-bottom-right-radius: $border-radius-section
-  background-color: $color-element
-  font-size: $text-big
-
-  @media #{$mobile}
-    align-self: flex-end
-    border-bottom-right-radius: 0 !important
-
-#result-config-option
-  @extend %result-extra
-  align-items: center
-  padding: 10px 22px
-  color: $color-fg-dim
-
-  > input
-    margin-right: 12px
-    &::before
-      background-color: $color-fg-dim
-
-  &:has(> input[checked])
-    background-color: $color-primary
-    color: $color-on-primary
-  > input[checked]::before
-    background-color: $color-on-primary
-
-#result-menu
-  @extend %result-extra
-  font-weight: bold
-  text-transform: uppercase
-
-  > div
-    padding: 10px 22px
-    border-bottom-left-radius: $border-radius-section
-    border-bottom-right-radius: $border-radius-section
-
-    &.selected
-      background-color: $color-primary
-      color: $color-on-primary
-
-    &:not(.selected)
-      cursor: pointer
-
-  @media #{$mobile}
-    > :last-child
-      border-bottom-right-radius: 0 !important
 
 #truthtable
   border-spacing: 0
@@ -954,9 +970,7 @@ table
 // ---------   INPUTS  ----------------
 // ------------------------------------
 
-#input-expression, #input-truthtable, #input-karnaugh, #input-minmaxterm
-  padding: $content-padding
-  box-sizing: border-box
+#input-expression, #input-truthtable, #input-minmaxterm
   button.action
     margin-left: 40px
 
@@ -1150,11 +1164,8 @@ table
   flex-direction: column
   align-items: center
 
-  > .karnaugh
-    padding: $content-padding
+  .karnaugh .kmap td
+    cursor: pointer
 
-    .kmap td
-      cursor: pointer
-
-  > .info-box
-    margin-top: 40px
+  .info-box
+    margin-top: 64px

@@ -384,54 +384,68 @@ proc draw(input: Input): VNode =
     draw(input.karnaugh)
 
 proc createDom: VNode =
+  template res: var ProblemResult = state.result
+
   buildHtml(tdiv):
-    case state.stage
-    of selectProblem:
-      tdiv(id = "menu"): tdiv:
-        for problem in Problem:
-          drawMenuItem(problem)
-    
-    of selectInput:
-      tdiv(id = "menu"):
-        tdiv(class = "title"): text "input as"
-        tdiv:
-          if state.problem == pKarnaugh:
-            drawMenuItem(iKarnaugh)
-          for kind in InputKind.iExpression .. iMinMaxTerm:
-            drawMenuItem(kind)
-    
-    of problemInput: draw(state.input)
-
-    of problemResult:
-      template res: var ProblemResult = state.result
-
-      case res.problem
-      of pKarnaugh:
-        tdiv(id = "result-menu"):
-          for (kind, name) in {jkDisj: "DNF", jkConj: "CNF"}:
-            tdiv(class = if res.kmapKind == kind: "selected" else: ""):
-              text name
-          proc onclick =
-            res.kmapKind = not res.kmapKind
-
-      of pQmc:
-        tdiv(id = "result-menu"):
-          for kind in JunctionKind:
-            tdiv(class = if res.qmcKind == kind: "selected" else: ""):
-              text $kind
-          proc onclick =
-            res.qmcKind = not res.qmcKind
-
-      of pDpSat:
-        tdiv(id = "result-config-option"):
-          input(`type` = "checkbox", checked = res.useClauseNames):
+    tdiv(id = "header"):
+      case state.stage
+      of problemInput:
+        if state.input.kind == iKarnaugh:
+          tdiv(id = "header-menu"):
+            for (kind, name) in {jkDisj: "DNF", jkConj: "CNF"}:
+              tdiv(class = if state.input.karnaugh.kind == kind: "selected" else: ""):
+                text name
             proc onclick =
-              res.useClauseNames = not res.useClauseNames
-          tdiv: text "Named Clauses"
+              state.input.karnaugh.kind = not state.input.karnaugh.kind
+              state.input.karnaugh.recompute()
 
+      of problemResult:
+        case res.problem
+        of pKarnaugh:
+          tdiv(id = "header-menu"):
+            for (kind, name) in {jkDisj: "DNF", jkConj: "CNF"}:
+              tdiv(class = if res.kmapKind == kind: "selected" else: ""):
+                text name
+            proc onclick =
+              res.kmapKind = not res.kmapKind
+
+        of pQmc:
+          tdiv(id = "header-menu"):
+            for kind in JunctionKind:
+              tdiv(class = if res.qmcKind == kind: "selected" else: ""):
+                text $kind
+            proc onclick =
+              res.qmcKind = not res.qmcKind
+
+        of pDpSat:
+          tdiv(id = "header-config-option"):
+            input(`type` = "checkbox", checked = res.useClauseNames):
+              proc onclick =
+                res.useClauseNames = not res.useClauseNames
+            tdiv: text "Named Clauses"
+
+        else: discard
       else: discard
-        
-      tdiv(id = "result"):
+
+    tdiv(id = "content"):
+      case state.stage
+      of selectProblem:
+        tdiv(id = "menu"): tdiv:
+          for problem in Problem:
+            drawMenuItem(problem)
+      
+      of selectInput:
+        tdiv(id = "menu"):
+          tdiv(class = "title"): text "input as"
+          tdiv:
+            if state.problem == pKarnaugh:
+              drawMenuItem(iKarnaugh)
+            for kind in InputKind.iExpression .. iMinMaxTerm:
+              drawMenuItem(kind)
+      
+      of problemInput: draw(state.input)
+
+      of problemResult:
         case res.problem
         of pTruthTable: draw(res.table)
         of pNfFromTable: draw(res.nfs)

@@ -269,15 +269,6 @@ proc draw*(karnaugh: KarnaughLiveMin): VNode =
     karnaugh.recompute()
 
   buildHtml(tdiv(id = "karnaugh-live")):
-
-    tdiv(id = "result-menu"):
-      for (kind, name) in {jkDisj: "DNF", jkConj: "CNF"}:
-        tdiv(class = if karnaugh.kind == kind: "selected" else: ""):
-          text name
-      proc onclick =
-        karnaugh.kind = not karnaugh.kind
-        karnaugh.recompute()
-
     tdiv(class = "karnaugh"):
       drawVars("row", 0 .. karnaugh.rowVarCount-1)
       drawVars("col", karnaugh.rowVarCount .. len(karnaugh.table.vars)-1)
