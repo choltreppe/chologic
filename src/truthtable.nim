@@ -14,16 +14,26 @@ type
   TruthTableEdit* = ref object of TruthTable
     newVarOrder: seq[string]
 
+func newTruthTable*(varCount: int): TruthTable =
+  TruthTable(
+    vars: (1..varCount).mapIt("x" & $it),
+    results: some(false).repeat(1 shl varCount)
+  )
+
 converter toTruthTableEdit*(table: TruthTable): TruthTableEdit =
   result = TruthTableEdit(table)
   result.newVarOrder = table.vars
 
+func toTableIndex(inputs: varargs[bool]): int {.inline.} =
+  result = 0
+  for input in inputs:
+    result = (result shl 1) or ord(input)
+
 func `[]`*(table: TruthTable, inputs: varargs[bool]): Option[bool] =
-  var id = 0
-  for i, input in inputs:
-    if input:
-      id += 1 shl (len(inputs)-1-i)
-  table.results[id]
+  table.results[inputs.toTableIndex]
+
+func `[]=`*(table: TruthTable, inputs: varargs[bool], val: Option[bool]) =
+  table.results[inputs.toTableIndex] = val
 
 func collectResults(expr: Expr, vars: seq[string]): seq[Option[bool]] =
   var assign: Table[string, bool]

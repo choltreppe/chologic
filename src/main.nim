@@ -39,19 +39,13 @@ type
 
   Input = ref object
     problem: Problem
-
     case kind: InputKind
     of iExpression:
       expr: string
       error: Option[ExprError]
-
-    of iMinMaxTerm:
-      minMaxTerms: MinMaxTermsInput
-
-    of iTruthTable:
-      table: TruthTable
-
-    of iKarnaugh: discard
+    of iMinMaxTerm: minMaxTerms: MinMaxTermsInput
+    of iTruthTable: table: TruthTable
+    of iKarnaugh: karnaugh: KarnaughLiveMin
 
   ProblemResult = object
     case problem: Problem
@@ -90,10 +84,9 @@ func newInputState(problem: Problem, kind: InputKind): State =
   of iMinMaxTerm:
     result.input.minMaxTerms = MinMaxTermsInput()
   of iTruthTable:
-    result.input.table = TruthTable(
-      vars: (1..3).mapIt("x" & $it),
-      results: some(false).repeat(8)
-    )
+    result.input.table = newTruthTable(3)
+  of iKarnaugh:
+    result.input.karnaugh = newKarnaughLiveMin(4)
   else: discard
 
 # debug:
@@ -207,15 +200,7 @@ proc drawMenuItem(kind: InputKind): VNode =
       state = newInputState(state.problem, kind)
 
 proc draw(input: TruthTable, problem: Problem): VNode =
-  var invalidVars = initHashSet[string]()
-  block:
-    var foundVars: seq[string]
-    for name in input.vars:
-      if name == "": invalidVars.incl ""
-      if name in foundVars:
-        invalidVars.incl name
-      else:
-        foundVars.add name
+  let invalidVars = findDupAndEmpty(input.vars)
 
   buildHtml(form(id = "input-truthtable")):
     proc onsubmit(e: Event, _: VNode) =
@@ -393,7 +378,10 @@ proc draw(input: Input): VNode =
 
   of iTruthTable: draw(input.table, input.problem)
   of iMinMaxTerm: draw(input.minMaxTerms, input.problem)
-  of iKarnaugh: text "Karnaugh (TODO)"
+  
+  of iKarnaugh:
+    assert input.problem == pKarnaugh
+    draw(input.karnaugh)
 
 proc createDom: VNode =
   buildHtml(tdiv):

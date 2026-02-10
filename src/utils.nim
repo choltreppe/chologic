@@ -47,6 +47,16 @@ func cmpVars*(a,b: seq[string]): HashSet[string] =
   result.incl a[ai..^1].toHashSet
   result.incl b[bi..^1].toHashSet
 
+func findDupAndEmpty*(x: seq[string]): HashSet[string] =
+  result = initHashSet[string]()
+  var found: seq[string]
+  for x in x:
+    if x == "": result.incl ""
+    if x in found:
+      result.incl x
+    else:
+      found.add x
+
 
 func inputValue*(n: VNode): string {.inline.} =
   $n.dom.InputElement.value

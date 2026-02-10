@@ -1,12 +1,10 @@
-import std/[sugar, sequtils, strutils, options, bitops, enumerate]
+import std/[sugar, sequtils, strutils, options, math, bitops, enumerate]
 import fusion/matching
 include karax/prelude
 
 import ./utils
 import ./expression, ./junction, ./truthtable
 
-
-const maxMinimisedImplisCount = 8
 
 type
   MTerms = set[uint8]
@@ -28,11 +26,15 @@ type
     rows: seq[ImpliMTerms]
     uniqueTerms: seq[MTerms]
 
+  QmcResult* = tuple
+    implis: seq[Impli]
+    expr: Expr
+
   Qmc = object
     steps: seq[QmcStep]
     impliTables: seq[ImpliTable]
-    results: seq[tuple[inplis: seq[Impli], expr: Expr]]  # all minimal impli combinations with expression
-    omittedResultsCount: int  # if too many possibilities, not all are included
+    results: seq[QmcResult]  # all minimal impli combinations with expression
+
   Qmcs* = object
     vars: seq[string]
     qmcs: array[JunctionKind, Qmc]
@@ -208,10 +210,11 @@ func doQmc(table: TruthTable, kind: JunctionKind): Qmc =
           for option in options:
             result &= row.impli & option
     var options = getOptions()
-    if len(options) > maxMinimisedImplisCount:
-      result.omittedResultsCount = len(options) - maxMinimisedImplisCount
-      options.setLen maxMinimisedImplisCount
-    result.results = options.mapIt((it, it.toExpr(table.vars, kind)))
+    let varCounts = options.mapIt(sum(it.mapIt(sum(it.mapIt(ord(it.isSome))))))
+    let minVarCount = min(varCounts)
+    for i, option in options:
+      if varCounts[i] == minVarCount:
+        result.results &= (option, option.toExpr(table.vars, kind))
 
 func doQmc*(table: TruthTable): Qmcs =
   result.vars = table.vars
@@ -219,15 +222,8 @@ func doQmc*(table: TruthTable): Qmcs =
     qmc = doQmc(table, kind)
 
 
-func minimize*(
-  table: TruthTable,
-  kind: JunctionKind
-): tuple[
-  results: seq[(seq[Impli], Expr)],
-  omittedResultsCount: int
-] {.inline.} =
-  let qmc = doQmc(table, kind)
-  (qmc.results, qmc.omittedResultsCount)
+func minimize*(table: TruthTable, kind: JunctionKind): seq[QmcResult] {.inline.} =
+  doQmc(table, kind).results
 
 
 
@@ -321,5 +317,3 @@ proc draw*(qmcs: Qmcs, kind: JunctionKind): VNode =
         for (_, expr) in qmc.results[1..^1]:
           bold: text "or"
           draw(expr)
-        if qmc.omittedResultsCount > 0:
-          bold: text ".. " & $qmc.omittedResultsCount & " more"

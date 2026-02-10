@@ -120,6 +120,18 @@ body
     overflow-x: auto
     overflow-y: hidden
 
+  &.single-line
+    flex-direction: row
+
+    > .title
+      align-self: stretch
+      border-radius: 0
+
+    > .content
+      align-self: center
+      padding: 0 20px
+      margin: 0
+
 .error-box
   align-self: stretch
   border-radius: $border-radius-element
@@ -538,9 +550,6 @@ table
   button
     float: right
 
-  button::before
-    @include colored-icon-url("img/tick.svg")
-
   .expr
     grid-area: expr
     flex-wrap: wrap
@@ -554,8 +563,8 @@ table
   flex-direction: column
   align-items: flex-start
 
-  > :not(:first-child)
-    margin-top: 32px !important
+  > div
+    margin-bottom: 32px !important
 
   > div:not(#qmc-results)
     display: flex
@@ -629,6 +638,10 @@ table
 
 #qmc-results
   @extend .info-box
+  margin-top: 12px
+  align-self: flex-start
+  border-spacing: 4px
+
   > .content
     display: flex
     flex-direction: column
@@ -636,8 +649,6 @@ table
       margin: 5px 0
       font-size: $text-small
       .conversion
-  align-self: flex-start
-  border-spacing: 4px
 
   > tbody
     
@@ -1129,3 +1140,18 @@ table
       border-top-left-radius: 0
       border-bottom-left-radius: 0
       margin-left: 6px
+
+
+#karnaugh-live
+  display: flex
+  flex-direction: column
+  align-items: center
+
+  > .karnaugh
+    padding: $content-padding
+
+    .kmap td
+      cursor: pointer
+
+  > .info-box
+    margin-top: 40px
