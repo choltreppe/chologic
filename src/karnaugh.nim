@@ -229,9 +229,8 @@ func newKarnaughLiveMin*(varCount: int): KarnaughLiveMin =
   result = KarnaughLiveMin(
     table: newTruthTable(varCount),
     rowVarCount: varCount div 2,
-    kind: jkConj
+    kind: jkDisj
   )
-  result.table.results[0] = some(true)
   result.recompute()
 
 proc draw*(karnaugh: KarnaughLiveMin): VNode =

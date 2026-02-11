@@ -68,7 +68,25 @@ func toExpr(implis: seq[Impli], vars: seq[string], kind: JunctionKind): Expr =
 
 
 func doQmc(table: TruthTable, kind: JunctionKind): Qmc =
-  
+
+  block checkForTrivialCase:
+    var has: array[bool, bool]
+    for v in table.results:
+      if Some(@v) ?= v:
+        has[v] = true
+        if has[not v]:
+          break checkForTrivialCase
+    return Qmc(results: @[
+      if not has[true] and not has[false]:
+        (implis: @[], expr: exprVal(kind == jkConj))
+      else:
+        assert has[true] != has[false]
+        var implis: seq[Impli]
+        if has[kind != jkConj]:
+          implis &= repeat(none(bool), len(table.vars))
+        (implis, exprVal(has[true]))
+    ])
+
   block:
     # get min-/maxterms and initial groups
     result.impliTables &= ImpliTable(title: "prime-implicant chart")
