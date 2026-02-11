@@ -64,27 +64,25 @@ proc recompute(karnaugh: Karnaugh) =
   karnaugh.genSolutions()
 
 
-proc drawImpliMap(
+iterator itemsWithHue(implis: seq[Impli]): (Impli, int) =
+  for i, impli in implis:
+    yield (impli, (i * 360) div len(implis))
+
+proc drawKMap(
   table: TruthTable,
   implis: seq[Impli],
   rowVarCount: int,
   onClickCell: proc(id: seq[bool]) = nil
-): tuple[
-  map, implis: VNode
-] =
+): VNode =
   let rowIds = genIds(rowVarCount)
   let colIds = genIds(len(table.vars) - rowVarCount)
 
-  var colorsImpli, colorsText: seq[VStyle]
-  for i in 0 ..< len(implis):
-    let hue = (i * 360) div len(implis)
-    colorsImpli &= style(
-      (borderColor, kstring &"hsl({hue},100%,70%)"),
-      (backgroundColor, kstring &"hsla({hue},100%,50%,0.2)")
-    )
-    colorsText &= style(
-      (color, kstring &"color: hsl({hue},100%,70%)")
-    )
+  let colorsImpli = collect:
+    for _, hue in implis.itemsWithHue:
+      style(
+        (borderColor, kstring &"oklch(100% 70% {hue})"),
+        (backgroundColor, kstring &"oklch(50% 100% {hue} / 0.2)")
+      )
 
   let filled: seq[tuple[row,col: bool]] =
     implis.mapIt((
@@ -127,41 +125,40 @@ proc drawImpliMap(
 
     buildHtml(tdiv(class = "mark", style = colorsImpli[i] & style))
 
-  result.map =
-    buildHtml(table(class = "kmap")):
+  buildHtml(table(class = "kmap")):
+    tr:
+      th()
+      for id in colIds:
+        th: #TODO single text node
+          for bit in id:
+            text $*bit
+
+    for row, rowId in rowIds:
       tr:
-        th()
-        for id in colIds:
-          th: #TODO single text node
-            for bit in id:
-              text $*bit
+        th: #TODO single text node
+          for bit in rowId:
+            text $*bit
+        for col, colId in colIds:
+          td:
+            for i in map[row][col]:
+              genMarkers(row, col, i)
+            let i = rowId&colId
+            capture(i, buildHtml(tdiv) do:
+              text $*table[i]
+              if onClickCell != nil:
+                proc onclick = onClickCell(i)
+            )
 
-      for row, rowId in rowIds:
-        tr:
-          th: #TODO single text node
-            for bit in rowId:
-              text $*bit
-          for col, colId in colIds:
-            td:
-              for i in map[row][col]:
-                genMarkers(row, col, i)
-              let i = rowId&colId
-              capture(i, buildHtml(tdiv) do:
-                text $*table[i]
-                if onClickCell != nil:
-                  proc onclick = onClickCell(i)
-              )
-
-  result.implis =
-    buildHtml(tdiv(class = "implis")):
-      table:
-        tr:
-          for name in table.vars:
-            th: text name
-        for i, impli in implis:
-          tr(style = colorsText[i]):
-            for v in impli:
-              td: text $*v
+proc draw(implis: seq[Impli], vars: seq[string]): VNode =
+  buildHtml(tdiv(class = "implis")):
+    table:
+      tr:
+        for name in vars:
+          th: text name
+      for impli, hue in implis.itemsWithHue:
+        tr(style = style(color, kstring &"oklch(100% 70% {hue})")):
+          for v in impli:
+            td: text $*v
 
 proc draw(karnaugh: Karnaugh, kind: JunctionKind, solutionId: int): VNode =
   let vars = karnaugh.rowVars & karnaugh.colVars
@@ -191,17 +188,12 @@ proc draw(karnaugh: Karnaugh, kind: JunctionKind, solutionId: int): VNode =
             karnaugh.recompute()
 
   let solution = karnaugh.solutions[kind][solutionId]
-  let (mapHtml, impliHtml) = drawImpliMap(
-    karnaugh.table,
-    solution.implis,
-    len(karnaugh.rowVars)
-  )
 
   buildHtml(tdiv(class = "karnaugh".concatIf(len(invalidVars) > 0, "outdated"))):
     drawVars("row", addr karnaugh.rowVars, addr karnaugh.colVars)
     drawVars("col", addr karnaugh.colVars, addr karnaugh.rowVars)
-    mapHtml
-    impliHtml
+    drawKMap(karnaugh.table, solution.implis, len(karnaugh.rowVars))
+    draw(solution.implis, karnaugh.table.vars)
     draw(solution.expr)
 
 proc draw*(karnaugh: Karnaugh, kind: JunctionKind): VNode =
@@ -255,25 +247,19 @@ proc draw*(karnaugh: KarnaughLiveMin): VNode =
           karnaugh.table.results &= repeat(some(false), len(karnaugh.table.results))
           karnaugh.recompute()
 
-  let (mapHtml, impliHtml) = drawImpliMap(
-    karnaugh.table,
-    karnaugh.solution.implis,
-    karnaugh.rowVarCount
-  ) do(id: seq[bool]):
-    karnaugh.table[id] =
-      if Some(@v) ?= karnaugh.table[id]:
-        if v: none(bool)
-        else: some(true)
-      else: some(false)
-    karnaugh.recompute()
-
   buildHtml(tdiv(id = "karnaugh-live")):
     tdiv(class = "karnaugh"):
       drawVars("row", 0 .. karnaugh.rowVarCount-1)
       drawVars("col", karnaugh.rowVarCount .. len(karnaugh.table.vars)-1)
-      mapHtml
-      impliHtml
       draw(karnaugh.solution.expr)
+      draw(karnaugh.solution.implis, karnaugh.table.vars)
+      drawKMap(karnaugh.table, karnaugh.solution.implis, karnaugh.rowVarCount) do(id: seq[bool]):
+        karnaugh.table[id] =
+          if Some(@v) ?= karnaugh.table[id]:
+            if v: none(bool)
+            else: some(true)
+          else: some(false)
+        karnaugh.recompute()
 
     tdiv(class = "info-box single-line"):
       tdiv(class = "title"): text "Help"
