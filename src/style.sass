@@ -15,15 +15,13 @@ $color-good:       #255540
 $color-bad:        #59303A
 $color-bad-bright: #C55560
 
-$text-small:  14px
-$text-middle: 16px
-$text-big:    20px
-$text-huge:   28px
+$text-small:  12px
+$text-middle: 14px
+$text-big:    18px
+$text-huge:   26px
 
-$border-radius-section:  28px
+$border-radius-section:  26px
 $border-radius-element:  20px
-
-$content-padding: 50px
 
 $delete-button-size: 8px
 
@@ -90,7 +88,7 @@ body
 
   @media #{$desktop}
     align-self: center
-    width: 640px
+    width: 600px
 
 #header-main
   display: flex
@@ -178,7 +176,10 @@ body
 #content
   flex: 1
   box-sizing: border-box
-  padding: $content-padding
+  @media #{$desktop}
+    padding: 50px
+  @media #{$mobile}
+    padding: 50px 30px
   display: flex
   flex-direction: column
   align-items: center
@@ -273,7 +274,7 @@ body
     color: $color-fg
 
 %simple-element
-  padding: 8px 16px
+  padding: 7px 14px
   border-radius: $border-radius-element
   border: none
   color: $color-fg
@@ -529,9 +530,19 @@ table
 
 .karnaugh
   display: grid
-  grid-template-columns: auto auto 1fr
-  grid-template-areas: ". col ." "row map implis" ". expr expr"
-  grid-gap: 32px
+
+  @media #{$desktop}
+    grid-template-columns: auto auto 1fr
+    grid-template-areas: ". col ." "row map implis" ". expr expr"
+    grid-gap: 30px
+
+  @media #{$mobile}
+    grid-template-columns: auto auto
+    grid-template-areas: ". col " "row map" ". implis" "expr expr"
+    grid-gap: 20px
+    .vars.row
+      margin-right: -28px
+
   position: relative
   padding-bottom: 42px  // to make space for expr (placed absolutely)  (I know kinda hacky but couldnt figure out other way to force it to wrap instead of growing the whole container)
 
@@ -591,7 +602,11 @@ table
 
   .implis
     grid-area: implis
-    margin-top: $cell-size
+    @media #{$desktop}
+      margin-top: $cell-size
+    @media #{$mobile}
+      margin-top: 12px
+      margin-bottom: 22px
     tr > *
       padding: 0 4px
 
@@ -606,6 +621,7 @@ table
 
     .var-input
       margin-right: 2px
+      width: 22px
 
     .add
       height: auto
@@ -1023,10 +1039,6 @@ table
 // ---------   INPUTS  ----------------
 // ------------------------------------
 
-#input-expression, #input-truthtable, #input-minmaxterm
-  button.action
-    margin-left: 40px
-
 #input-expression
   width: 100%
   @media #{$desktop}
@@ -1053,7 +1065,7 @@ table
       border-top-left-radius: 0
       border-bottom-left-radius: 0
       padding-left: 12px
-      margin-left: 2px !important
+      margin-left: 2px
 
   > .error-box
     align-self: flex-start
@@ -1177,6 +1189,7 @@ table
 
   > .inputs
     flex: 1
+    align-self: stretch
     display: grid
     grid-template-columns: auto 1fr
 
@@ -1210,6 +1223,18 @@ table
       border-top-left-radius: 0
       border-bottom-left-radius: 0
       margin-left: 6px
+
+
+#input-truthtable, #input-minmaxterm
+  @media #{$desktop}
+    button.action
+      margin-left: 40px
+
+  @media #{$mobile}
+    flex-direction: column
+    button.action
+      margin-top: 40px
+      align-self: flex-end
 
 
 #karnaugh-live
