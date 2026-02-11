@@ -532,6 +532,8 @@ table
   grid-template-columns: auto auto 1fr
   grid-template-areas: ". col ." "row map implis" ". expr expr"
   grid-gap: 32px
+  position: relative
+  padding-bottom: 42px  // to make space for expr (placed absolutely)  (I know kinda hacky but couldnt figure out other way to force it to wrap instead of growing the whole container)
 
   > *
     align-self: start
@@ -619,6 +621,7 @@ table
   .expr
     grid-area: expr
     flex-wrap: wrap
+    position: absolute
 
 .karnaugh.outdated > :not(.vars)
   opacity: $outdated-opacity
