@@ -232,19 +232,27 @@ proc draw*(karnaugh: KarnaughLiveMin): VNode =
   proc drawVars(class: string, slice: Slice[int]): VNode =
     buildHtml(tdiv(class = "vars " & class)):
       for i, v in karnaugh.table.vars[slice]:
-        capture(i,
-          buildHtml(input(
+        capture(i, buildHtml(tdiv) do:
+          if len(slice) > 1:
+            tdiv(class = "icon button delete", title = "remove variable"):
+              proc onclick =
+                karnaugh.table.vars.delete(i)
+                if slice.a == 0:  # is rows
+                  dec karnaugh.rowVarCount
+          input(
             `type` = "text",
             value = v,
             class = "var-input".concatIf(v in invalidVars, "invalid")
-          )) do:
+          ):
             proc oninput(_: Event, n: VNode) =
               karnaugh.table.vars[i+slice.a] = n.inputValue
         )
       tdiv(class = "icon button add"):
         proc onclick =
-          karnaugh.table.vars.insert("", slice.b)
+          karnaugh.table.vars.insert("", slice.b+1)
           karnaugh.table.results &= repeat(some(false), len(karnaugh.table.results))
+          if slice.a == 0:  # is rows
+            inc karnaugh.rowVarCount
           karnaugh.recompute()
 
   buildHtml(tdiv(id = "karnaugh-live")):

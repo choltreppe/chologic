@@ -320,8 +320,15 @@ button.icon
     background-color: $color-fg-dim
 
   &.delete
+    position: relative
     @each $dim in [width, height]
       #{$dim}: 2 * $delete-button-size
+    @each $side in [top, bottom]
+      margin-#{$side}: -$delete-button-size
+    margin-right: -1px
+    margin-left: 1px - 2*$delete-button-size
+    float: right
+    outline: 2px $color-bg solid
     z-index: 2
 
     &::before
@@ -385,7 +392,7 @@ table
 #menu
   display: flex
 
-  $gap: 8px
+  $gap: 3px
 
   %item
     font-size: $text-huge
@@ -475,7 +482,7 @@ table
       position: relative
       width: 32px
       padding: 0
-      padding-right: 4px
+      padding-right: 3px
     
   tr:not(:first-child)
     > *
@@ -498,7 +505,7 @@ table
   opacity: $outdated-opacity
 
 .var-input
-  width: 42px
+  width: 36px
   border-radius: 0 !important
   text-align: center
   @each $side in [left, right]
@@ -620,7 +627,7 @@ table
         grid-area: #{$dir}
 
     .var-input
-      margin-right: 2px
+      margin-right: 3px
       width: 22px
 
     .add
@@ -1161,13 +1168,6 @@ table
       &.add.disabled::before
         display: none !important
 
-    th > .delete
-      position: relative
-      @each $side in [top, bottom]
-        margin-#{$side}: -$delete-button-size
-      margin-right: 4px
-      float: right
-
     td:last-child
       border-left: 12px transparent solid !important
 
@@ -1222,7 +1222,7 @@ table
       align-self: start
       border-top-left-radius: 0
       border-bottom-left-radius: 0
-      margin-left: 6px
+      margin-left: 3px
 
 
 #input-truthtable, #input-minmaxterm
@@ -1242,7 +1242,10 @@ table
   flex-direction: column
   align-items: center
 
-  .karnaugh .kmap td
+  .vars > div
+    position: relative
+
+  .kmap td
     cursor: pointer
 
   .info-box
