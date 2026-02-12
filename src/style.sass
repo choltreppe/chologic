@@ -93,7 +93,6 @@ body
 #header-main
   display: flex
   flex-direction: row
-  align-items: stretch
   justify-content: space-between
   background-color: $color-primary
   color: $color-on-primary
@@ -105,15 +104,22 @@ body
 
 #logo
   display: block
-  width: 80px
-  margin: 16px
+  align-self: stretch
+  width: 70px
+  height: 45px
+  margin: 15px
   background: url(img/logo.svg) center no-repeat
   background-size: contain
+  &:last-child
+    background-image: url(img/logo_logic.svg)
+    width: 100%
+    height: 56px
 
 #page-title
+  align-self: center
   font-size: $text-huge
   font-weight: bold
-  padding: ($text-huge * 0.8) ($text-huge * 1.2)
+  padding: 0 $text-huge
 
 %header-extra
   align-self: flex-end
@@ -413,7 +419,6 @@ table
       text-decoration: none
 
       &:first-child
-        border-top-left-radius: $border-radius-element
         border-top-right-radius: $border-radius-element
       &:last-child
         border-bottom-left-radius: $border-radius-element
@@ -432,8 +437,6 @@ table
   @media #{$desktop}
     flex-direction: row
     align-items: flex-start
-    > :last-child:not(:first-child) > :first-child
-      border-top-left-radius: 0
     > .title
       margin-left: -12px
       margin-right: $gap
@@ -443,9 +446,8 @@ table
   @media #{$mobile}
     flex-direction: column
     align-items: stretch
-    > :last-child:not(:first-child) > :first-child
-      border-radius: 0
     > .title
+      align-self: flex-start
       margin-bottom: $gap
       border-top-left-radius: $border-radius-element
       border-top-right-radius: $border-radius-element

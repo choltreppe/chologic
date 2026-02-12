@@ -116,6 +116,7 @@ proc draw*(table: TruthTableEdit): VNode =
         capture(i, buildHtml(th) do:
           input(
             `type` = "text",
+            autocapitalize = "none",
             class = "var-input".concatIf(name in invalidVars, "invalid"),
             value = name
           ):

@@ -210,6 +210,7 @@ proc draw(input: TruthTable, problem: Problem): VNode =
                     i += stepSize
             input(
               `type` = "text",
+              autocapitalize = "none",
               class = "var-input".concatIf(name in invalidVars, "invalid"),
               value = $name
             ):
@@ -296,6 +297,7 @@ proc draw(input: Input): VNode =
         input(
           `type` = "text",
           placeholder = "Enter logic expression",
+          autocapitalize = "none",
           size = "1",
           class = if input.error.isSome: "mark-error" else: "",
           value = input.expr
@@ -394,12 +396,14 @@ proc main(route: RouterData): VNode =
     tdiv(id = "header"):
       tdiv(id = "header-main"):
         a(id = "logo", href="#")
-        tdiv(id = "page-title"):
-          case state.stage
-          of chooseProblem: text "LOGIC"
-          of chooseInput: text $state.problem
-          of problemInput: text $state.input.problem
-          of problemResult: text $state.result.problem
+        block:
+          tdiv(id = "page-title"): text $(
+            case state.stage
+            of chooseProblem: break
+            of chooseInput: state.problem
+            of problemInput: state.input.problem
+            of problemResult: state.result.problem
+          )
 
       case state.stage
       of problemInput:

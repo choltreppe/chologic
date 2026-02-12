@@ -175,8 +175,9 @@ proc draw(karnaugh: Karnaugh, kind: JunctionKind, solutionId: int): VNode =
         capture(i,
           buildHtml(input(
             `type` = "text",
-            value = v,
-            class = "var-input".concatIf(v in invalidVars, "invalid")
+            autocapitalize = "none",
+            class = "var-input".concatIf(v in invalidVars, "invalid"),
+            value = v
           )) do:
             proc oninput(_: Event, n: VNode) =
               editVars[i] = n.inputValue
@@ -241,8 +242,9 @@ proc draw*(karnaugh: KarnaughLiveMin): VNode =
                   dec karnaugh.rowVarCount
           input(
             `type` = "text",
-            value = v,
-            class = "var-input".concatIf(v in invalidVars, "invalid")
+            autocapitalize = "none",
+            class = "var-input".concatIf(v in invalidVars, "invalid"),
+            value = v
           ):
             proc oninput(_: Event, n: VNode) =
               karnaugh.table.vars[i+slice.a] = n.inputValue
