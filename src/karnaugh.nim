@@ -1,6 +1,5 @@
-import std/[sugar, sequtils, strformat, options, bitops, algorithm, sets]
+import std/[sugar, sequtils, strformat, options, algorithm, sets]
 import fusion/matching
-import results
 include karax/prelude
 import karax/vstyles
 

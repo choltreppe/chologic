@@ -1,7 +1,6 @@
 import std/[options, sequtils, strformat, unicode, tables, sets]
 import std/strutils except alignLeft
 import fusion/matching
-import results
 include karax/prelude
 
 import ./expression
@@ -37,19 +36,10 @@ func res*(conv: Conversion): Expr =
 
 const ruleDescPadding = 32
 
-func `$`*(step: ConvertStep): string =
-  step.desc.mapIt(&"{it[0]} ≡ {it[1]}").join(", ").alignLeft(ruleDescPadding) & $step.expr
-
-func `$`*(conv: Conversion): string =
-  result = ' '.repeat(ruleDescPadding) & $conv.expr & "\n"
-  for step in conv.steps:
-    result.add $step & "\n"
-
-
 
 proc newConvertRule(desc: (string, string), convert: ConvertProc): ConvertRule =
   ConvertRule(
-    desc: (parseExpr(desc[0]).get, parseExpr(desc[1]).get),
+    desc: (parseExpr(desc[0]), parseExpr(desc[1])),
     convert: convert
   )
 
