@@ -1,7 +1,6 @@
 {.experimental: "caseStmtMacros".}
 import std/[dom, options, sequtils, strutils, strformat, sets, math, sugar, base64]
 import fusion/matching
-import results
 include karax/prelude
 
 import ./utils, ./selections
@@ -146,24 +145,24 @@ proc computeFromTable(table: TruthTable, problem: TableCompatProblem): ProblemRe
     result.qmcKind = jkDisj
   else: assert false
 
-proc computeFromExpr(exprStr: string, problem: Problem): Result[ProblemResult, ExprError] =
-  parseExpr(exprStr).map do(expr: Expr) -> ProblemResult:
+proc computeFromExpr(exprStr: string, problem: Problem): ProblemResult =
+  let expr =  parseExpr(exprStr)
+  case problem
+  of pTruthTable .. pQmc:
+    return computeFromTable(expr.toTruthTable, problem)
+  else:
+    result = ProblemResult(problem: problem)
     case problem
-    of pTruthTable .. pQmc:
-      return computeFromTable(expr.toTruthTable, problem)
-    else:
-      result = ProblemResult(problem: problem)
+    of pCmos: result.cmos = genCmos(expr)
+    of pCost: result.cost = getCost(expr)
+    of pHornSat: result.hornSat = doHornSat(expr)
+    of pDpSat: result.dpSat = doDpSat(expr)
+    else: result.conv = convert(expr):
       case problem
-      of pCmos: result.cmos = genCmos(expr)
-      of pCost: result.cost = getCost(expr)
-      of pHornSat: result.hornSat = doHornSat(expr)
-      of pDpSat: result.dpSat = doDpSat(expr)
-      else: result.conv = convert(expr):
-        case problem
-        of pConvertNand: caNand
-        of pConvertDnf:  caDnf
-        of pConvertCnf:  caCnf
-        else: assert false; return
+      of pConvertNand: caNand
+      of pConvertDnf:  caDnf
+      of pConvertCnf:  caCnf
+      else: assert false; return
 
 proc computeFromMinMaxTerm(input: MinMaxTermsInput, problem: TableCompatProblem): ProblemResult =
   if len(input.mtermDontcareCollisions) > 0: return
@@ -284,15 +283,13 @@ proc draw(input: Input): VNode =
       form:
         proc onsubmit(e: Event, n: VNode) =
           preventDefault e
-          let res = computeFromExpr(input.expr, input.problem)
-          if res.isOk:
-            setResult res.get
-          else:
-            let err = res.error
+          try:
+            setResult computeFromExpr(input.expr, input.problem)
+          except ExprError as err:
             input.error = some(err)
             let exprInput = getExprInput()
             focus exprInput
-            exprInput.selection = err.pos
+            exprInput.selection = err.pos .. err.pos
 
         input(
           `type` = "text",

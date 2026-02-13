@@ -1,7 +1,5 @@
-import std/[strformat, strutils, sequtils, sets, tables, sugar]
+import std/[strformat, strutils, sequtils, parseutils, unicode, sets, tables, sugar]
 import fusion/matching
-import results
-import parlexgen
 include karax/prelude
 import ./utils
 
@@ -18,9 +16,8 @@ type
       op*: BinOp
       lhs*, rhs*: Expr
 
-  ExprError* = object
-    pos*: Slice[int]
-    msg*: string
+  ExprError* = ref object of CatchableError
+    pos*: int
 
 const allowedSymbolsBinOp* = [
   boAnd   : @["&&", "&", "∧", "*", "⋅"],
@@ -56,7 +53,7 @@ func exprNot*(inner: Expr): Expr =
 
 func `not`*(expr: Expr): Expr =
   if expr =: ekNot: expr.inner
-  else           : exprNot(expr)
+  else            : exprNot(expr)
 
 func exprBinOp*(op: BinOp, operands: varargs[Expr]): Expr =
   if len(operands) == 0: exprVal(op != boOr)
@@ -195,111 +192,75 @@ func simplify*(expr: Expr): Expr =
       else: exprBinOp(expr.op, operands)
 
 
-func parseExpr*(code: string): Result[Expr, ExprError] =
+proc parseExpr*(code: string): Expr =
+  var i = 0
 
-  type
-    TokenKind = enum BOOL, IDENT, LPAR="(", RPAR=")", NOT="¬", AND="∧", OR="∨", IMPL="→", BIIMPL="↔"
-    Token = object
-      case kind: TokenKind
-      of BOOL: val: bool
-      of IDENT: name: string
-      else: discard
-      pos: Slice[int]
-      col: int
+  const unaryExprsStr = "variable, value or negation"
+  const binaryOpsStr = "a binary operator"
 
-  func escape(s: string): string =
-    for c in s:
-      result &= "\\" & c
+  proc raiseError(found, expected: string) {.noreturn.} =
+    raise ExprError(pos: i, msg: &"unexpected {found}. expected {expected}.")
 
-  makeLexer lex[Token]:
-    for (t, op) in [(AND, boAnd), (OR, boOr), (IMPL, boImpl), (BIIMPL, boBiImpl)]:
-      (allowedSymbolsBinOp[op].map(escape).join("|")):
-        Token(kind: t, pos: pos ..< pos+len(match), col: runeCol)
+  proc skipSpaces(expectAfter: string) =
+    i += code.skipWhitespace(i)
+    if i >= len(code):
+      raiseError("EOL", expectAfter)
 
-    (allowedSymbolsNot.map(escape).join("|")):
-      Token(kind: NOT, pos: pos ..< pos+len(match), col: runeCol)
+  proc checkOpSkip(syms: seq[string]): bool =
+    for sym in syms:
+      if code.continuesWith(sym, i):
+        i += len(sym)
+        return true
+    false
 
-    r"\(": Token(kind: LPAR, pos: pos..pos, col: runeCol)
-    r"\)": Token(kind: RPAR, pos: pos..pos, col: runeCol)
+  proc parseExpr: Expr
+  proc parseExprUnary: Expr =
+    skipSpaces(expectAfter = unaryExprsStr)
+    case code[i]
+    of '(': inc i; parseExpr()
+    of '0': exprVal(false)
+    of '1': exprVal(true)
+    elif checkOpSkip(allowedSymbolsNot): exprNot(parseExprUnary())
+    else:
+      if code[i] notin IdentStartChars:
+        raiseError(&"'{code.runeAt(i)}'", unaryExprsStr)
+      var name: string
+      i += code.parseWhile(name, IdentChars, i)
+      exprVar(name)
 
-    "0": Token(kind: BOOL, val: false, pos: pos..pos, col: runeCol)
-    "1": Token(kind: BOOL, val: true, pos: pos..pos, col: runeCol)
+  proc parseExpr: Expr =
+    let parenStart = i
+    result = parseExprUnary()
+    var isFirstIter = true
+    while i < len(code):
+      skipSpaces(expectAfter = binaryOpsStr)
+      if code[i] == ')':
+        if parenStart == 0:
+          raise ExprError(pos: i, msg: "found ')' with no coresponding '('.")
+        inc i
+        return
 
-    r"[A-Za-z_][A-Za-z0-9_]*":
-      Token(kind: IDENT, name: match, pos: pos ..< pos+len(match), col: runeCol)
+      var op: BinOp
+      block getOp:
+        for checkOp, syms in allowedSymbolsBinOp:
+          if checkOpSkip(syms):
+            op = checkOp
+            break getOp
+        raiseError(&"'{code.runeAt(i)}'", binaryOpsStr)
 
-    r"\s+": discard
-
-  makeParser parse[Token]:
-    expr_bi_impl[Expr]:
-      (expr_bi_impl, BIIMPL, expr_impl): exprBinOp(boBiImpl, s[0], s[2])
-      expr_impl: s[0]
-
-    expr_impl[Expr]:
-      (expr_impl, IMPL, expr_or): exprBinOp(boImpl, s[0], s[2])
-      expr_or: s[0]
-
-    expr_or[Expr]:
-      (expr_or, OR, expr_and): exprBinOp(boOr, s[0], s[2])
-      expr_and: s[0]
-
-    expr_and[Expr]:
-      (expr_and, AND, expr_not): exprBinOp(boAnd, s[0], s[2])
-      expr_not: s[0]
-
-    expr_not[Expr]:
-      (NOT, expr_not): exprNot(s[1])
-      val_var: s[0]
-
-    val_var[Expr]:
-      (LPAR, expr_bi_impl, RPAR): s[1]
-      BOOL: exprVal(s[0].val)
-      IDENT: exprVar(s[0].name)
-
-  try: ok(parse(code, lex))
-
-  except LexingError as e:
-    err(ExprError(pos: e.pos..e.pos, msg: &"{e.runeCol}: unexpected '{code[e.pos]}'"))
-
-  except ParsingError[Token, TokenKind] as e:
-    var expectedList = collect:
-      for kind in e.expectedTerminals:
-        case kind
-        of BOOL:
-          "a boolean"
-        of IDENT:
-          "a variable"
+      let rhs = parseExprUnary()
+      result = 
+        if isFirstIter or (result.kind == ekBinOp and opPrecedence[op] <= opPrecedence[result.op]): 
+          exprBinOp(op, result, rhs)
         else:
-          "\'" & $kind & "\'"
-    if e.expectedEOF:
-      expectedList.add "EOL"
-    assert len(expectedList) > 0
+          exprBinOp(result.op, result.lhs, exprBinOp(op, result.rhs, rhs))
 
-    let expectedStr =
-      if len(expectedList) == 1:
-        expectedList[0]
-      else:
-        expectedList[0 ..< ^1].join(", ") & " or " & expectedList[^1]
-    
-    let foundStr =
-      if Some(@token) ?= e.token:
-        "\'" & (
-          case token.kind
-          of BOOL: $*token.val
-          of IDENT: token.name
-          else: $token.kind
-        ) & "\'"
-      else: "EOL"
-    
-    var msg = "found " & foundStr & ", but expected " & expectedStr
+      isFirstIter = false
 
-    let pos =
-      if Some(@token) ?= e.token:
-        msg = &"{token.col}: {msg}"
-        token.pos
-      else: high(code) .. high(code)
+    if parenStart != 0:
+      raise ExprError(pos: high(code), msg: "not all parentheses were closed.")
 
-    err(ExprError(pos: pos, msg: msg))
+  parseExpr()
 
 
 proc draw*(op: BinOp): VNode =
@@ -356,41 +317,9 @@ proc draw*(expr: Expr): VNode =
 
 
 func `$`*(expr: Expr): string =
-
-  template inParenIf(cond, cmd: untyped) =
-    if cond:
-      result &= "("
-      cmd
-      result &= ")"
-    else:
-      cmd
-
-  if expr != nil:
-    case expr.kind:
-    of ekVal: return $*expr.val
-    of ekVar: return expr.name
-
-    of ekNot:
-      result = $ekNot
-      inParenIf(expr.inner =: ekBinOp):
-        result &= $expr.inner
-
-    of ekBinOp:
-      let prec = opPrecedence[expr.op]
-
-      if expr.op == boImpl:
-        inParenIf(expr.lhs =: ekBinOp and opPrecedence[expr.lhs.op] < prec):
-          result &= $expr.lhs
-
-        result &= $expr.op
-
-        inParenIf(expr.rhs =: ekBinOp and opPrecedence[expr.rhs.op] <= prec):
-          result &= $expr.rhs
-
-      else:
-        var first = true
-        for operand in expr.operands:
-          if not first: result &= $expr.op
-          first = false
-          inParenIf(operand =: ekBinOp and opPrecedence[operand.op] < prec):
-            result &= $operand
+  if expr == nil: return ""
+  case expr.kind:
+  of ekVal: $*expr.val
+  of ekVar: expr.name
+  of ekNot: &"{ekNot}{expr.inner}"
+  of ekBinOp: &"({expr.lhs} {expr.op} {expr.rhs})"
