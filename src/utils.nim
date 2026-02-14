@@ -4,25 +4,11 @@ from karax/jdict import JSeq
 import fusion/matching
 
 
-template `?`*[T](val: Option[T]): untyped =
-  if val.isSome: val.get
-  else: return
-
-
 func `$*`*(v: bool): string = $int(v)
 
 func `$*`*(v: Option[bool]): string =
   if Some(@v) ?= v: $*v
   else            : "-"
-
-func toBoolOption*(s: string): Option[bool] =
-  case s
-  of "1": some true
-  of "0": some false
-  else  : none bool
-
-func toBoolOption*(c: char): Option[bool] =
-  toBoolOption($c)
   
 
 func concatIf*(base: string, cond: bool, s: string): string {.inline.} =

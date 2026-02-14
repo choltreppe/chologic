@@ -10,19 +10,6 @@ func newSelection*(i: int): Selection =
 converter toSelection*(slice: Slice[int]): Selection =
   Selection(a: slice.a, b: slice.b + 1)
 
-proc `+`*(selection: Selection, i: (int, int)): Selection =
-  Selection(
-    a: selection.a + i[0],
-    b: selection.b + i[1]
-  )
-
-proc `+=`*(selection: var Selection, i: (int, int)) =
-  selection.a += i[0]
-  selection.b += i[1]
-
-proc `+=`*(selection: var Selection, i: int) =
-  selection += (i, i)
-
 func `[]`*(s: string|cstring, selection: Selection): string =
   if selection.b <= selection.a: ""
   else: ($s)[selection.a ..< selection.b]
@@ -61,9 +48,3 @@ proc `selection=`*(n: TextAreaElement|InputElement, selection: Selection) =
   let start = runeLen(s, 0 ..< selection.a)
   n.selectionStart = start
   n.selectionEnd   = start + runeLen(s, selection.a ..< selection.b)
-
-template withSelection*(n: TextAreaElement|InputElement, body: untyped) =
-  block withSelectionBlock:
-    var selection {.inject.} = n.selection
-    body
-    n.selection = selection

@@ -234,7 +234,7 @@ proc draw(input: TruthTable, problem: Problem): VNode =
                 capture(i, val, buildHtml(tdiv) do:
                   input(`type` = "radio", value = $*val, checked = res == val):
                     proc onclick(_: Event, n: VNode) =
-                      input.results[i] = toBoolOption(n.inputValue)
+                      input.results[i] = val
                   tdiv:
                     text  if Some(@val) ?= val: $*val
                           else: "d"
