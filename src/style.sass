@@ -25,6 +25,8 @@ $border-radius-element:  20px
 
 $delete-button-size: 8px
 
+$content-padding: 30px
+
 $outdated-opacity: 40%
 
 $desktop: "(min-width: 760px)"
@@ -184,10 +186,7 @@ body
   align-self: center
   max-width: 100%
   box-sizing: border-box
-  @media #{$desktop}
-    padding: 50px
-  @media #{$mobile}
-    padding: 50px 30px
+  padding: 50px $content-padding
   overflow-x: auto
 
 #github
@@ -1060,20 +1059,21 @@ table
     display: flex
     flex-direction: row
     align-items: stretch
+    border-radius: $border-radius-element
+    background-color: $color-action
+    border: 2px $color-action solid
+    overflow: hidden
     
     > input[type="text"]
       flex: 1
-      border-top-right-radius: 0
-      border-bottom-right-radius: 0
+      border-radius: 0
       &.mark-error::selection
         background-color: $color-bad-bright
         color: $color-bad
     
     > input[type="submit"]
-      border-top-left-radius: 0
-      border-bottom-left-radius: 0
+      border-radius: 0
       padding-left: 12px
-      margin-left: 2px
 
   > .error-box
     align-self: flex-start
@@ -1181,7 +1181,7 @@ table
       flex-direction: row
 
 #input-minmaxterm
-  width: 100%
+  width: calc(100vw - #{2*$content-padding})
   @media #{$desktop}
     max-width: 690px
   display: flex
